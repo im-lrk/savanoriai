@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LRK Mokymai — ataskaitos</title>
+<title>LRK Mokymai — ataskaitų archyvas</title>
 <style>
 :root {
   --red:#C8102E; --red2:#e00035; --bg:#F3F4F7; --card:#fff; --border:rgba(20,24,40,.11);
@@ -18,6 +18,11 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-seri
 h1{font-size:20px;margin:0 0 2px;font-weight:800;letter-spacing:-.02em}
 .sub{font-size:12px;color:var(--muted);font-family:Arial,sans-serif}
 
+.tabs{background:#fff;display:flex;gap:6px;border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:62px;z-index:25;box-shadow:0 1px 4px rgba(0,0,0,.04);overflow-x:auto}
+.tab{padding:15px 20px 13px;cursor:pointer;font-weight:800;color:#606277;border-bottom:4px solid transparent;font-size:15px;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:Arial,sans-serif}
+.tab:hover{color:#30374f}
+.tab.act{color:var(--red2);border-bottom-color:var(--red2)}
+
 .main{padding:22px 20px 60px;max-width:1100px;margin:0 auto}
 
 .search-wrap{margin-bottom:22px}
@@ -30,40 +35,26 @@ h1{font-size:20px;margin:0 0 2px;font-weight:800;letter-spacing:-.02em}
 
 .sec-label{display:flex;align-items:center;gap:10px;color:#30374f;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin:26px 0 12px}
 .sec-label:after{content:"";height:1px;background:var(--border);flex:1}
-
-.year-group{margin-bottom:8px}
 .year-group:first-of-type .sec-label{margin-top:0}
 
-.report-list{display:flex;flex-direction:column;gap:10px}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .report-card{
-  background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);
-  padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;
-  text-decoration:none;color:var(--text);transition:.12s;
+  background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);
+  padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  text-decoration:none;color:var(--text);transition:.12s;text-align:center;
 }
-.report-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(17,24,39,.12);border-color:rgba(200,16,46,.35)}
-.report-card-left{display:flex;align-items:center;gap:14px;min-width:0}
-.report-icon{
-  width:38px;height:38px;border-radius:9px;background:#fdeef1;color:var(--red2);
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;
-}
-.report-info{min-width:0}
-.report-title{font-weight:800;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.report-date{font-size:12.5px;color:var(--muted);margin-top:1px}
-.report-arrow{color:var(--muted2);font-size:18px;flex-shrink:0}
-.report-card:hover .report-arrow{color:var(--red2)}
-.report-card.latest{border-color:rgba(200,16,46,.4);background:linear-gradient(0deg,#fff,#fff7f8)}
-.pill-latest{
-  background:var(--red2);color:#fff;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:800;
-  letter-spacing:.04em;margin-left:8px;flex-shrink:0;
-}
+.report-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(17,24,39,.12);border-color:rgba(200,16,46,.35)}
+.report-card:hover .report-date{color:var(--red2)}
+.report-icon{font-size:20px;line-height:1}
+.report-date{font-weight:800;font-size:15px;color:var(--text)}
 
 .empty-msg{padding:30px;text-align:center;color:var(--muted);font-size:14px;display:none}
 
 .footer-note{color:var(--muted);font-size:12px;margin-top:30px;text-align:center}
 
 @media(max-width:600px){
-  .report-title{font-size:14px}
   .main{padding:16px 14px 40px}
+  .tab{padding:12px 14px;font-size:14px}
 }
 </style>
 </head>
@@ -73,11 +64,13 @@ h1{font-size:20px;margin:0 0 2px;font-weight:800;letter-spacing:-.02em}
   <div class="brand">
     <div class="logo">LRK</div>
     <div>
-      <h1>Mokymai — savaitinės ataskaitos</h1>
-      <div class="sub">Visos savaitinės ataskaitos vienoje vietoje</div>
+      <h1>Mokymai — ataskaitų archyvas</h1>
+      <div class="sub">Visos ataskaitos vienoje vietoje</div>
     </div>
   </div>
 </div>
+
+<div class="tabs" id="tabsBar"></div>
 
 <div class="main">
 
@@ -95,17 +88,40 @@ h1{font-size:20px;margin:0 0 2px;font-weight:800;letter-spacing:-.02em}
 <script>
 /* ============================================================
    REPORTS REGISTRY
-   Add a new entry here every time a new weekly dashboard
-   file is uploaded to this GitHub directory.
+   Add a new entry here every time a new dashboard file is
+   uploaded to this GitHub directory.
    - file: exact filename in this directory
-   - label: human-readable date/week shown to the user
-   - latest: set true on the most recent report (only one!)
+   - label: date shown to the user (YYYY-MM-DD recommended for correct sorting)
+   - section: which tab this report belongs to (see SECTIONS below)
    ============================================================ */
-const REPORTS = [
-  { file: "mokymu-kalendorius-savaitinis-06.23.html", label: "2026-06-23", latest: true }
-  // { file: "mokymu-kalendorius-savaitinis-06.16", label: "2026-06-16" },
-  // { file: "LRK_Mokymai_Savaitinis_06_09.html", label: "2026-06-09" },
+const SECTIONS = [
+  { key: "kalendorius", label: "Mokymų kalendorius", sub: "Savaitinės ataskaitos" },
+  { key: "planas",      label: "Mokymų plano vykdymas", sub: "Mėnesio ir ketvirčio ataskaitos" },
+  { key: "bendruomenes",label: "Bendruomenių bazė", sub: "" }
 ];
+
+const REPORTS = [
+  { file: "LRK_Mokymai_Savaitinis_06.23.html", label: "2026-06-23", section: "kalendorius" }
+  // { file: "LRK_Mokymai_Savaitinis_06.16.html", label: "2026-06-16", section: "kalendorius" },
+  // { file: "LRK_Mokymai_Menesinis_05.html",     label: "2026-05",    section: "planas" },
+  // { file: "LRK_Bendruomenes_Q2.html",          label: "2026 Q2",    section: "bendruomenes" },
+];
+
+let activeSection = SECTIONS[0].key;
+
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  bar.innerHTML = SECTIONS.map(s =>
+    `<button class="tab ${s.key === activeSection ? 'act' : ''}" onclick="switchSection('${s.key}')">${s.label}</button>`
+  ).join('');
+}
+
+function switchSection(key) {
+  activeSection = key;
+  renderTabs();
+  document.getElementById('searchBox').value = '';
+  renderReports('');
+}
 
 function groupByYear(reports) {
   const groups = {};
@@ -122,11 +138,14 @@ function renderReports(filterText) {
   const emptyMsg = document.getElementById('emptyMsg');
   const term = (filterText || '').trim().toLowerCase();
 
-  const filtered = REPORTS.filter(r =>
-    !term || r.label.toLowerCase().includes(term) || r.file.toLowerCase().includes(term)
-  );
+  let filtered = REPORTS.filter(r => r.section === activeSection);
+  if (term) {
+    filtered = filtered.filter(r =>
+      r.label.toLowerCase().includes(term) || r.file.toLowerCase().includes(term)
+    );
+  }
 
-  // sort newest first by label (assumes YYYY-MM-DD prefix)
+  // newest first
   filtered.sort((a, b) => b.label.localeCompare(a.label));
 
   if (filtered.length === 0) {
@@ -143,18 +162,12 @@ function renderReports(filterText) {
   years.forEach(year => {
     html += `<div class="year-group">
       <div class="sec-label">${year}</div>
-      <div class="report-list">`;
+      <div class="report-grid">`;
     groups[year].forEach(r => {
       html += `
-        <a class="report-card ${r.latest ? 'latest' : ''}" href="${r.file}">
-          <div class="report-card-left">
-            <div class="report-icon">📊</div>
-            <div class="report-info">
-              <div class="report-title">Savaitinė ataskaita · ${r.label}${r.latest ? '<span class="pill-latest">NAUJAUSIA</span>' : ''}</div>
-              <div class="report-date">${r.file}</div>
-            </div>
-          </div>
-          <div class="report-arrow">→</div>
+        <a class="report-card" href="${r.file}">
+          <div class="report-icon">📊</div>
+          <div class="report-date">${r.label}</div>
         </a>`;
     });
     html += `</div></div>`;
@@ -164,10 +177,10 @@ function renderReports(filterText) {
 }
 
 function filterReports() {
-  const term = document.getElementById('searchBox').value;
-  renderReports(term);
+  renderReports(document.getElementById('searchBox').value);
 }
 
+renderTabs();
 renderReports('');
 </script>
 
