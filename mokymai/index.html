@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LRK Mokymai — savaitinių ataskaitų archyvas</title>
+<style>
+:root {
+  --red:#C8102E; --red2:#e00035; --bg:#F3F4F7; --card:#fff; --border:rgba(20,24,40,.11);
+  --text:#111827; --muted:#5A5D72; --muted2:#777B90;
+  --shadow:0 4px 14px rgba(17,24,39,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;font-size:15px;line-height:1.45}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:30;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{background:var(--red);color:#fff;font-weight:800;letter-spacing:.08em;padding:5px 10px;border-radius:4px;font-size:11px}
+h1{font-size:20px;margin:0 0 2px;font-weight:800;letter-spacing:-.02em}
+.sub{font-size:12px;color:var(--muted);font-family:Arial,sans-serif}
+
+.main{padding:22px 20px 60px;max-width:1100px;margin:0 auto}
+
+.search-wrap{margin-bottom:22px}
+.search-input{
+  width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:10px;
+  font-size:15px;font-family:Arial,sans-serif;background:#fff;box-shadow:var(--shadow);
+  color:var(--text);
+}
+.search-input:focus{outline:2px solid var(--red2);outline-offset:-1px}
+
+.sec-label{display:flex;align-items:center;gap:10px;color:#30374f;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin:26px 0 12px}
+.sec-label:after{content:"";height:1px;background:var(--border);flex:1}
+
+.year-group{margin-bottom:8px}
+.year-group:first-of-type .sec-label{margin-top:0}
+
+.report-list{display:flex;flex-direction:column;gap:10px}
+.report-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);
+  padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;
+  text-decoration:none;color:var(--text);transition:.12s;
+}
+.report-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(17,24,39,.12);border-color:rgba(200,16,46,.35)}
+.report-card-left{display:flex;align-items:center;gap:14px;min-width:0}
+.report-icon{
+  width:38px;height:38px;border-radius:9px;background:#fdeef1;color:var(--red2);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;
+}
+.report-info{min-width:0}
+.report-title{font-weight:800;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.report-date{font-size:12.5px;color:var(--muted);margin-top:1px}
+.report-arrow{color:var(--muted2);font-size:18px;flex-shrink:0}
+.report-card:hover .report-arrow{color:var(--red2)}
+.report-card.latest{border-color:rgba(200,16,46,.4);background:linear-gradient(0deg,#fff,#fff7f8)}
+.pill-latest{
+  background:var(--red2);color:#fff;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:800;
+  letter-spacing:.04em;margin-left:8px;flex-shrink:0;
+}
+
+.empty-msg{padding:30px;text-align:center;color:var(--muted);font-size:14px;display:none}
+
+.footer-note{color:var(--muted);font-size:12px;margin-top:30px;text-align:center}
+
+@media(max-width:600px){
+  .report-title{font-size:14px}
+  .main{padding:16px 14px 40px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="logo">LRK</div>
+    <div>
+      <h1>Mokymai — savaitinių ataskaitų archyvas</h1>
+      <div class="sub">Visos savaitinės dashboard ataskaitos vienoje vietoje</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="searchBox" placeholder="Ieškoti ataskaitos (pvz. data arba mėnuo)..." oninput="filterReports()">
+  </div>
+
+  <div id="reportsContainer"></div>
+  <div class="empty-msg" id="emptyMsg">Nerasta ataskaitų pagal paieškos žodį.</div>
+
+  <div class="footer-note">Lietuvos Raudonasis Kryžius · Duomenų valdymo skyrius</div>
+
+</div>
+
+<script>
+/* ============================================================
+   REPORTS REGISTRY
+   Add a new entry here every time a new weekly dashboard
+   file is uploaded to this GitHub directory.
+   - file: exact filename in this directory
+   - label: human-readable date/week shown to the user
+   - latest: set true on the most recent report (only one!)
+   ============================================================ */
+const REPORTS = [
+  { file: "LRK_Mokymai_Savaitinis_06_23.html", label: "2026-06-23", latest: true }
+  // { file: "LRK_Mokymai_Savaitinis_06_16.html", label: "2026-06-16" },
+  // { file: "LRK_Mokymai_Savaitinis_06_09.html", label: "2026-06-09" },
+];
+
+function groupByYear(reports) {
+  const groups = {};
+  reports.forEach(r => {
+    const year = (r.label.match(/^\d{4}/) || ["Kiti"])[0];
+    if (!groups[year]) groups[year] = [];
+    groups[year].push(r);
+  });
+  return groups;
+}
+
+function renderReports(filterText) {
+  const container = document.getElementById('reportsContainer');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const term = (filterText || '').trim().toLowerCase();
+
+  const filtered = REPORTS.filter(r =>
+    !term || r.label.toLowerCase().includes(term) || r.file.toLowerCase().includes(term)
+  );
+
+  // sort newest first by label (assumes YYYY-MM-DD prefix)
+  filtered.sort((a, b) => b.label.localeCompare(a.label));
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  const groups = groupByYear(filtered);
+  const years = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  let html = '';
+  years.forEach(year => {
+    html += `<div class="year-group">
+      <div class="sec-label">${year}</div>
+      <div class="report-list">`;
+    groups[year].forEach(r => {
+      html += `
+        <a class="report-card ${r.latest ? 'latest' : ''}" href="${r.file}">
+          <div class="report-card-left">
+            <div class="report-icon">📊</div>
+            <div class="report-info">
+              <div class="report-title">Savaitinis dashboard · ${r.label}${r.latest ? '<span class="pill-latest">NAUJAUSIA</span>' : ''}</div>
+              <div class="report-date">${r.file}</div>
+            </div>
+          </div>
+          <div class="report-arrow">→</div>
+        </a>`;
+    });
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function filterReports() {
+  const term = document.getElementById('searchBox').value;
+  renderReports(term);
+}
+
+renderReports('');
+</script>
+
+</body>
+</html>
