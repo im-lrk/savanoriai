@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LRK Senjorų klubai 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C0392B;--darkred:#7B241C;--white:#fff;
+  --bg:#F5F4F1;--card:#FFFFFF;--surface2:#F9F8F6;--border:#E2DDD6;--border2:#EDE9E3;
+  --text:#1C1A17;--text2:#4A4540;--muted:#8A837A;--muted2:#B0A89F;--faint:#F5F4F1;
+  --green:#1A7A4A;--green-light:#27AE60;--green-pale:#E9F7EF;
+  --amber:#D35400;--amber-pale:#FEF0E7;
+  --blue:#1F618D;--blue-pale:#EAF2FB;
+  --yellow:#B7950B;--yellow-pale:#FEF9E7;
+  --coral:#C0392B;--coral-pale:#FDECEA;
+  --grey:#8A837A;--grey-pale:#F5F4F1;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04);
+  --pietu:#C0392B;--rytu:#1A7A4A;--vakaru:#1F618D;--siaures:#D35400;
+}
+body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+header{background:var(--darkred);color:#fff;padding:1.5rem 2rem 1.25rem;display:flex;align-items:center;gap:14px}
+.rk-cross{width:32px;height:32px;flex-shrink:0}
+header h1{font-size:1.4rem;font-weight:600;letter-spacing:-0.01em}
+header p{font-size:0.78rem;opacity:0.7;margin-top:2px}
+nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 1rem}
+nav button{font-size:0.82rem;padding:0.7rem 1rem;color:var(--muted);background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;font-weight:500;transition:color .15s}
+nav button.active,nav button:hover{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+section{display:none}
+section.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;border-top:3px solid var(--red);box-shadow:var(--shadow)}
+.kpi-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.kpi-val{font-size:1.9rem;font-weight:700;color:var(--text);line-height:1.1}
+.kpi-sub{font-size:.72rem;color:var(--muted);margin-top:3px}
+.stitle{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:1.5rem 0 .75rem;display:flex;align-items:center;gap:8px}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+@media(max-width:680px){.chart-grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem;box-shadow:var(--shadow)}
+.card-title{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.9rem}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:.75rem;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.1rem;align-items:center}
+.filter-row label{font-size:.75rem;color:var(--muted);font-weight:500}
+select{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--text);font-size:.8rem}
+.tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.tbl th{text-align:left;padding:7px 9px;border-bottom:1.5px solid var(--border);color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.tbl td{padding:6px 9px;border-bottom:.5px solid var(--border);vertical-align:middle}
+.tbl tr:hover td{background:var(--faint)}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap}
+.bg{background:var(--green-pale);color:var(--green)}
+.ba{background:var(--amber-pale);color:var(--amber)}
+.bc{background:var(--coral-pale);color:var(--coral)}
+.bk{background:var(--grey-pale);color:var(--grey)}
+.bb{background:var(--blue-pale);color:var(--blue)}
+.bar-wrap{width:56px;height:6px;background:var(--border);border-radius:3px;display:inline-block;vertical-align:middle;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+#map{width:100%;height:460px;border-radius:10px;border:1px solid var(--border);z-index:0}
+.map-wrap{position:relative}
+.map-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:.75rem;font-size:.78rem;color:var(--muted)}
+.map-legend span{display:flex;align-items:center;gap:6px}
+.rdot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.att-legend{display:flex;gap:16px;margin-top:.5rem;font-size:.75rem;color:var(--muted)}
+.att-legend span{display:flex;align-items:center;gap:5px}
+.note{font-size:.75rem;color:var(--muted);margin-top:.6rem;font-style:italic}
+.cnt{font-size:.75rem;color:var(--muted);margin-top:.6rem}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <svg class="rk-cross" viewBox="0 0 32 32">
+    <rect x="13" y="0" width="6" height="32" fill="white"/>
+    <rect x="0" y="13" width="32" height="6" fill="white"/>
+  </svg>
+  <div>
+    <h1>LRK Senjorų klubai — 2026</h1>
+    <p>Šiltieji apsilankymai · Ataskaita: sausis–balandis 2026 · SF eksportas 2026-05-06</p>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="go('apzvalga',this)">Apžvalga</button>
+  <button onclick="go('dydis',this)">Klubų dydis</button>
+  <button onclick="go('aktyvumas',this)">Aktyvumas</button>
+  <button onclick="go('lankomumas',this)">Lankomumas</button>
+  <button onclick="go('geografija',this)">Geografija</button>
+  <button onclick="go('sarasas',this)">Klubų sąrašas</button>
+</nav>
+
+<main>
+
+<section id="apzvalga" class="active">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Klubų</div><div class="kpi-val">57</div><div class="kpi-sub">4 regionai · 14 skyriai</div></div>
+    <div class="kpi"><div class="kpi-label">Narių</div><div class="kpi-val">1 025</div><div class="kpi-sub">vid. 18 / klubas</div></div>
+    <div class="kpi"><div class="kpi-label">Susitikimų</div><div class="kpi-val">338</div><div class="kpi-sub">saus.–bal. 2026</div></div>
+    <div class="kpi"><div class="kpi-label">Vid. lankomumas</div><div class="kpi-val">63,7%</div><div class="kpi-sub">aktyvių klubų</div></div>
+    <div class="kpi"><div class="kpi-label">Aktyvūs klubai</div><div class="kpi-val">44</div><div class="kpi-sub">13 neaktyvių</div></div>
+    <div class="kpi"><div class="kpi-label">Susitikimų / mėn.</div><div class="kpi-val">84,5</div><div class="kpi-sub">vid. per 4 mėn.</div></div>
+  </div>
+
+  <div class="stitle">Regionų palyginimas</div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Klubai ir nariai pagal regioną</div>
+      <div class="legend">
+        <span><span class="ld" style="background:var(--pietu)"></span>Pietų</span>
+        <span><span class="ld" style="background:var(--rytu)"></span>Rytų</span>
+        <span><span class="ld" style="background:var(--vakaru)"></span>Vakarų</span>
+        <span><span class="ld" style="background:var(--siaures)"></span>Šiaurės</span>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="cRegion" role="img" aria-label="Nariai pagal regioną">Pietų 245, Rytų 184, Vakarų 141, Šiaurės 455.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Susitikimai per mėnesį (saus.–bal.)</div>
+      <div style="position:relative;height:225px"><canvas id="cMonthly" role="img" aria-label="Susitikimai per mėnesį"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Susitikimai pagal regioną</div>
+      <div style="position:relative;height:210px"><canvas id="cRegEvents" role="img" aria-label="Susitikimai pagal regioną"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vid. lankomumas pagal regioną</div>
+      <div style="position:relative;height:210px"><canvas id="cRegAtt" role="img" aria-label="Vidutinis lankomumas pagal regioną"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section id="dydis">
+  <div class="stitle">Narių skaičius</div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Pasiskirstymas pagal dydį</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#74B9FF"></span>Mažas (1–5)</span>
+        <span><span class="ld" style="background:#0984E3"></span>Vidutinis (6–15)</span>
+        <span><span class="ld" style="background:#2D3436"></span>Didelis (16+)</span>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="cSizeDonut" role="img" aria-label="Klubų dydžių pasiskirstymas">Mažas 9, Vidutinis 25, Didelis 23.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 10 klubų pagal narių skaičių</div>
+      <div style="position:relative;height:400px"><canvas id="cTopSize" role="img" aria-label="Top 10 klubų pagal narių skaičių"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section id="aktyvumas">
+  <div class="stitle">Susitikimų dažnis</div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Klubai pagal aktyvumą</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#DFE6E9"></span>Neaktyvus</span>
+        <span><span class="ld" style="background:#74B9FF"></span>Retai</span>
+        <span><span class="ld" style="background:#00CEC9"></span>Reguliariai</span>
+        <span><span class="ld" style="background:#6C5CE7"></span>Intensyviai</span>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="cActDonut" role="img" aria-label="Klubai pagal aktyvumą"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Susitikimai pagal regioną (saus.–bal.)</div>
+      <div style="position:relative;height:210px"><canvas id="cActRegion" role="img" aria-label="Susitikimai pagal regioną"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title">Top 15 aktyviausių klubų — susitikimų skaičius</div>
+    <div style="position:relative;height:580px"><canvas id="cActTop" role="img" aria-label="Aktyviausi klubai"></canvas></div>
+  </div>
+</section>
+
+<section id="lankomumas">
+  <div class="stitle">Dalyvavimas</div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Lankomumo grupės</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#00B894"></span>Aukštas ≥75%</span>
+        <span><span class="ld" style="background:#FDCB6E"></span>Vidutinis 50–75%</span>
+        <span><span class="ld" style="background:#FF7675"></span>Žemas &lt;50%</span>
+        <span><span class="ld" style="background:#DFE6E9"></span>Nėra duomenų</span>
+      </div>
+      <div style="position:relative;height:210px"><canvas id="cAttDonut" role="img" aria-label="Lankomumo grupės"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vid. lankomumas % — top 20 aktyvių klubų</div>
+      <div style="position:relative;height:780px"><canvas id="cAttBar" role="img" aria-label="Lankomumas top 20 klubų"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section id="geografija">
+  <div class="stitle">Žemėlapis</div>
+  <p class="note" style="margin-bottom:.75rem">Kiekvienas žymeklis — LRK skyrius. Spalva = regionas. Dydis = narių skaičius. Spustelėkite žymeklį norėdami pamatyti detales.</p>
+  <div class="map-wrap">
+    <div id="map"></div>
+  </div>
+  <div class="map-legend">
+    <span><span class="rdot" style="background:var(--pietu)"></span>Pietų</span>
+    <span><span class="rdot" style="background:var(--rytu)"></span>Rytų</span>
+    <span><span class="rdot" style="background:var(--vakaru)"></span>Vakarų</span>
+    <span><span class="rdot" style="background:var(--siaures)"></span>Šiaurės</span>
+  </div>
+  <div class="att-legend">
+    Apskritimo spalvos intensyvumas = lankomumo lygis:
+    <span><span class="rdot" style="background:#00B894;width:10px;height:10px"></span>Aukštas</span>
+    <span><span class="rdot" style="background:#FDCB6E;width:10px;height:10px"></span>Vidutinis</span>
+    <span><span class="rdot" style="background:#FF7675;width:10px;height:10px"></span>Žemas</span>
+    <span><span class="rdot" style="background:#b2bec3;width:10px;height:10px"></span>Nėra duomenų</span>
+  </div>
+
+  <div class="stitle" style="margin-top:1.5rem">Skyriai</div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr>
+        <th>Skyrius</th><th>Regionas</th><th>Klubų</th><th>Narių</th><th>Susitikimų</th><th>Vid. lankomumas</th>
+      </tr></thead>
+      <tbody id="deptTbl"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sarasas">
+  <div class="filter-row">
+    <label>Regionas</label>
+    <select id="fR" onchange="renderTbl()"><option value="">Visi</option><option>Pietų</option><option>Rytų</option><option>Vakarų</option><option>Šiaurės</option></select>
+    <label>Dydis</label>
+    <select id="fS" onchange="renderTbl()"><option value="">Visi</option><option>Mažas (1–5)</option><option>Vidutinis (6–15)</option><option>Didelis (16+)</option></select>
+    <label>Aktyvumas</label>
+    <select id="fA" onchange="renderTbl()"><option value="">Visi</option><option>Neaktyvus</option><option>Retai (1/mėn.)</option><option>Reguliariai (2–3/mėn.)</option><option>Intensyviai (4+/mėn.)</option></select>
+    <label>Lankomumas</label>
+    <select id="fAt" onchange="renderTbl()"><option value="">Visi</option><option>Aukštas (75%+)</option><option>Vidutinis (50–75%)</option><option>Žemas (&lt;50%)</option><option>Nėra duomenų</option></select>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr>
+        <th>Klubas</th><th>Skyrius</th><th>Regionas</th>
+        <th>Nariai</th><th>Susitikimai</th><th>Vid./mėn.</th><th>Lankomumas</th><th>Dydis</th><th>Aktyvumas</th>
+      </tr></thead>
+      <tbody id="clubTbl"></tbody>
+    </table>
+  </div>
+  <div id="tblCnt" class="cnt"></div>
+</section>
+
+</main>
+
+<script>
+const CLUBS = [{"club": "Bei\u017eioni\u0173 senjor\u0173 klubas", "dept": "Elektr\u0117n\u0173 skyrius", "region": "Ryt\u0173", "n_members": 5, "n_events": 8, "n_active_months": 4, "avg_per_month": 2.0, "avg_attendance": 77.5, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 2, "2": 2, "3": 2, "4": 2}, "coords": [54.7833, 24.6667]}, {"club": "Elektr\u0117n\u0173 UA klubas", "dept": "Elektr\u0117n\u0173 skyrius", "region": "Ryt\u0173", "n_members": 1, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 100.0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 2, "2": 1, "3": 1}, "coords": [54.7833, 24.6667]}, {"club": "Jonavos senjor\u0173 klubas", "dept": "Kauno skyrius", "region": "Piet\u0173", "n_members": 16, "n_events": 2, "n_active_months": 2, "avg_per_month": 1.0, "avg_attendance": 53.1, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"3": 1, "4": 1}, "coords": [54.8985, 23.9036]}, {"club": "Kai\u0161iadori\u0173 \"M\u016bro Str\u0117vinink\u0173\" klubas", "dept": "Elektr\u0117n\u0173 skyrius", "region": "Ryt\u0173", "n_members": 2, "n_events": 2, "n_active_months": 2, "avg_per_month": 1.0, "avg_attendance": 50.0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"3": 1, "4": 1}, "coords": [54.7833, 24.6667]}, {"club": "Kauno Senj\u0173 klubas skyriuje", "dept": "Kauno skyrius", "region": "Piet\u0173", "n_members": 6, "n_events": 1, "n_active_months": 1, "avg_per_month": 1.0, "avg_attendance": 100.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1}, "coords": [54.8985, 23.9036]}, {"club": "Klaip\u0117dos \"Kretinga\"", "dept": "Klaip\u0117dos skyrius", "region": "Vakar\u0173", "n_members": 19, "n_events": 2, "n_active_months": 2, "avg_per_month": 1.0, "avg_attendance": 5.3, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"2": 1, "3": 1}, "coords": [55.7033, 21.1443]}, {"club": "Klaip\u0117dos \"Skaitov\u0173\" klubas", "dept": "Klaip\u0117dos skyrius", "region": "Vakar\u0173", "n_members": 6, "n_events": 6, "n_active_months": 4, "avg_per_month": 1.5, "avg_attendance": 38.9, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 1, "2": 2, "3": 2, "4": 1}, "coords": [55.7033, 21.1443]}, {"club": "Klaip\u0117dos \"Til\u017e\u0117\"", "dept": "Klaip\u0117dos skyrius", "region": "Vakar\u0173", "n_members": 23, "n_events": 36, "n_active_months": 4, "avg_per_month": 9.0, "avg_attendance": 34.7, "size_group": "Didelis (16+)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 7, "2": 10, "3": 10, "4": 9}, "coords": [55.7033, 21.1443]}, {"club": "Leli\u016bn\u0173 senjor\u0173 klubas", "dept": "Utenos skyrius", "region": "\u0160iaur\u0117s", "n_members": 14, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 44.6, "size_group": "Vidutinis (6\u201315)", "act_group": "Retai (1/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 1, "2": 1, "3": 2}, "coords": [55.4986, 25.5986]}, {"club": "Ma\u017eeiki\u0173 \"M\u017dK\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 104, "n_events": 22, "n_active_months": 4, "avg_per_month": 5.5, "avg_attendance": 13.3, "size_group": "Didelis (16+)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 2, "2": 5, "3": 10, "4": 5}, "coords": [55.9349, 23.3137]}, {"club": "Mol\u0117t\u0173 senjor\u0173 klubas", "dept": "Utenos skyrius", "region": "\u0160iaur\u0117s", "n_members": 10, "n_events": 13, "n_active_months": 4, "avg_per_month": 3.2, "avg_attendance": 20.8, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 3, "2": 5, "3": 1, "4": 4}, "coords": [55.4986, 25.5986]}, {"club": "Naujamiescio senjori\u0173 klubas", "dept": "Panev\u0117\u017eio skyrius", "region": "\u0160iaur\u0117s", "n_members": 9, "n_events": 14, "n_active_months": 4, "avg_per_month": 3.5, "avg_attendance": 97.6, "size_group": "Vidutinis (6\u201315)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 3, "2": 4, "3": 4, "4": 3}, "coords": [55.7348, 24.3574]}, {"club": "Panev\u0117\u017eio Senj\u0173 klubas", "dept": "Panev\u0117\u017eio skyrius", "region": "\u0160iaur\u0117s", "n_members": 33, "n_events": 8, "n_active_months": 4, "avg_per_month": 2.0, "avg_attendance": 62.1, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"1": 2, "2": 1, "3": 2, "4": 2}, "coords": [55.7348, 24.3574]}, {"club": "Pasvalio Bo\u010deli\u0173 klubas", "dept": "Panev\u0117\u017eio skyrius", "region": "\u0160iaur\u0117s", "n_members": 27, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 72.2, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"2": 1, "3": 3}, "coords": [55.7348, 24.3574]}, {"club": "Pump\u0117n\u0173 senjorai", "dept": "Panev\u0117\u017eio skyrius", "region": "\u0160iaur\u0117s", "n_members": 19, "n_events": 6, "n_active_months": 3, "avg_per_month": 2.0, "avg_attendance": 78.9, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 1, "3": 2, "4": 3}, "coords": [55.7348, 24.3574]}, {"club": "Radvili\u0161kio \"RDV\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 13, "n_events": 18, "n_active_months": 3, "avg_per_month": 6.0, "avg_attendance": 17.5, "size_group": "Vidutinis (6\u201315)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 6, "2": 5, "3": 7}, "coords": [55.9349, 23.3137]}, {"club": "Rasein\u0173 \"Branda\"", "dept": "Rasein\u0173 skyrius", "region": "Piet\u0173", "n_members": 21, "n_events": 1, "n_active_months": 1, "avg_per_month": 1.0, "avg_attendance": 100.0, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1}, "coords": [55.367, 23.122]}, {"club": "Rasein\u0173 \"Prie arbatos\"", "dept": "Rasein\u0173 skyrius", "region": "Piet\u0173", "n_members": 14, "n_events": 1, "n_active_months": 1, "avg_per_month": 1.0, "avg_attendance": 100.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1}, "coords": [55.367, 23.122]}, {"club": "Roki\u0161kio senjor\u0173 klubas \"B\u016bkime kartu\"", "dept": "Roki\u0161kio skyrius", "region": "\u0160iaur\u0117s", "n_members": 9, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.9609, 25.585]}, {"club": "Taurag\u0117s \"Banga\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 16, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 65.6, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"1": 1, "3": 3}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"Batakiai\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 13, "n_events": 5, "n_active_months": 2, "avg_per_month": 2.5, "avg_attendance": 70.8, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"3": 1, "4": 4}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"Bingo\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 9, "n_events": 5, "n_active_months": 3, "avg_per_month": 1.7, "avg_attendance": 75.6, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1, "2": 2, "3": 1, "4": 1}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"Galmena\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 9, "n_events": 4, "n_active_months": 2, "avg_per_month": 2.0, "avg_attendance": 97.2, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"3": 2, "4": 2}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"J\u016bra\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 14, "n_events": 7, "n_active_months": 4, "avg_per_month": 1.8, "avg_attendance": 79.6, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1, "2": 1, "3": 3, "4": 2}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"Tauras\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 14, "n_events": 6, "n_active_months": 3, "avg_per_month": 2.0, "avg_attendance": 89.3, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 1, "3": 3, "4": 2}, "coords": [55.2505, 22.2896]}, {"club": "Taurag\u0117s \"\u017dara\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 15, "n_events": 12, "n_active_months": 4, "avg_per_month": 3.0, "avg_attendance": 59.4, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"1": 5, "2": 2, "3": 4, "4": 1}, "coords": [55.2505, 22.2896]}, {"club": "Tel\u0161i\u0173 \"TL\u0160\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 16, "n_events": 2, "n_active_months": 2, "avg_per_month": 1.0, "avg_attendance": 37.5, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"3": 1, "4": 1}, "coords": [55.9349, 23.3137]}, {"club": "Ukmerge senjor\u0173 klubas \"RK Ukmergiskiai\"", "dept": "Ukmerges skyrius", "region": "Ryt\u0173", "n_members": 15, "n_events": 10, "n_active_months": 3, "avg_per_month": 3.3, "avg_attendance": 48.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"2": 2, "3": 4, "4": 4}, "coords": [55.2457, 24.7725]}, {"club": "Ukmerges Ukrainieciai senjor\u0173 klubas", "dept": "Ukmerges skyrius", "region": "Ryt\u0173", "n_members": 25, "n_events": 17, "n_active_months": 4, "avg_per_month": 4.2, "avg_attendance": 27.1, "size_group": "Didelis (16+)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 2, "2": 4, "3": 5, "4": 6}, "coords": [55.2457, 24.7725]}, {"club": "Utena senjor\u0173 klubas skyriuje", "dept": "Utenos skyrius", "region": "\u0160iaur\u0117s", "n_members": 8, "n_events": 14, "n_active_months": 4, "avg_per_month": 3.5, "avg_attendance": 42.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 4, "2": 4, "3": 1, "4": 5}, "coords": [55.4986, 25.5986]}, {"club": "Utenos senjor\u0173 klubas \"Penktadienio popiet\u0117\"", "dept": "Utenos skyrius", "region": "\u0160iaur\u0117s", "n_members": 1, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.4986, 25.5986]}, {"club": "Vilkavi\u0161kio \"Avilys\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 21, "n_events": 3, "n_active_months": 2, "avg_per_month": 1.5, "avg_attendance": 69.8, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"1": 1, "3": 2}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"Giliukai\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 16, "n_events": 16, "n_active_months": 4, "avg_per_month": 4.0, "avg_attendance": 71.5, "size_group": "Didelis (16+)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "Vidutinis (50\u201375%)", "monthly": {"1": 3, "2": 5, "3": 3, "4": 5}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"Liep\u0173 takas\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 8, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"Nendri\u0173 kiemas\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 10, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 95.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 1, "3": 2, "4": 1}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"Rim\u0161os kiemas\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 10, "n_events": 5, "n_active_months": 3, "avg_per_month": 1.7, "avg_attendance": 80.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1, "3": 2, "4": 2}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"Ruden\u0117lis\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 58, "n_events": 1, "n_active_months": 1, "avg_per_month": 1.0, "avg_attendance": 98.3, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 1}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"S\u016bduviai\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 16, "n_events": 4, "n_active_months": 2, "avg_per_month": 2.0, "avg_attendance": 86.0, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"3": 2, "4": 2}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"\u017demaites kiemas\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 10, "n_events": 4, "n_active_months": 3, "avg_per_month": 1.3, "avg_attendance": 75.0, "size_group": "Vidutinis (6\u201315)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"1": 1, "3": 2, "4": 1}, "coords": [54.65, 23.0333]}, {"club": "Vilkavi\u0161kio \"\u017didinys\"", "dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "n_members": 39, "n_events": 2, "n_active_months": 2, "avg_per_month": 1.0, "avg_attendance": 100.0, "size_group": "Didelis (16+)", "act_group": "Retai (1/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"3": 1, "4": 1}, "coords": [54.65, 23.0333]}, {"club": "Vilniaus \" Biblioteka\"", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 13, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.6872, 25.2797]}, {"club": "Vilniaus \"Senj\u0173 centras\"", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 47, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Didelis (16+)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.6872, 25.2797]}, {"club": "Vilniaus \"Senj\u0173 universitetas\"", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 1, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.6872, 25.2797]}, {"club": "Vilniaus ukrainieciai klubas", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 50, "n_events": 8, "n_active_months": 4, "avg_per_month": 2.0, "avg_attendance": 19.2, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 1, "2": 2, "3": 2, "4": 3}, "coords": [54.6872, 25.2797]}, {"club": "Vilniaus Atgaiva", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 12, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.6872, 25.2797]}, {"club": "Vilniaus Jasinskio klubas", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 12, "n_events": 3, "n_active_months": 2, "avg_per_month": 1.5, "avg_attendance": 11.1, "size_group": "Vidutinis (6\u201315)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 2, "2": 1}, "coords": [54.6872, 25.2797]}, {"club": "Visagino senjor\u0173 klubas \"Auksinis protas\"", "dept": "Visagino skyrius", "region": "\u0160iaur\u0117s", "n_members": 21, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Didelis (16+)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.601, 26.4307]}, {"club": "Visagino senjor\u0173 klubas \"VILTIS\"", "dept": "Visagino skyrius", "region": "\u0160iaur\u0117s", "n_members": 28, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Didelis (16+)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.601, 26.4307]}, {"club": "Visagino senjor\u0173 klubas \"VSPC\"", "dept": "Visagino skyrius", "region": "\u0160iaur\u0117s", "n_members": 12, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.601, 26.4307]}, {"club": "Zaras\u0173 senjor\u0173 klubas \"Salakas\"", "dept": "Visagino skyrius", "region": "\u0160iaur\u0117s", "n_members": 12, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Vidutinis (6\u201315)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.601, 26.4307]}, {"club": "\u0160al\u010dinink\u0173 senjor\u0173 klubas \"Atgaiva\"", "dept": "Vilniaus skyrius", "region": "Ryt\u0173", "n_members": 1, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [54.6872, 25.2797]}, {"club": "\u0160iauli\u0173 \"\u0160LS 1\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 33, "n_events": 28, "n_active_months": 4, "avg_per_month": 7.0, "avg_attendance": 6.0, "size_group": "Didelis (16+)", "act_group": "Intensyviai (4+/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 6, "2": 4, "3": 5, "4": 13}, "coords": [55.9349, 23.3137]}, {"club": "\u0160iauli\u0173 \"\u0160LS 2\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 55, "n_events": 3, "n_active_months": 2, "avg_per_month": 1.5, "avg_attendance": 35.2, "size_group": "Didelis (16+)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "\u017demas (<50%)", "monthly": {"1": 2, "4": 1}, "coords": [55.9349, 23.3137]}, {"club": "\u0160iauli\u0173 \"\u0160LSR\"", "dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "n_members": 31, "n_events": 0, "n_active_months": 0, "avg_per_month": 0, "avg_attendance": 0, "size_group": "Didelis (16+)", "act_group": "Neaktyvus", "att_group": "N\u0117ra duomen\u0173", "monthly": {}, "coords": [55.9349, 23.3137]}, {"club": "\u0160ilal\u0117s \"Balskai\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 1, "n_events": 7, "n_active_months": 3, "avg_per_month": 2.3, "avg_attendance": 100.0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 2, "3": 2, "4": 3}, "coords": [55.2505, 22.2896]}, {"club": "\u0160ilal\u0117s \"Didkiemis\"", "dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "n_members": 1, "n_events": 6, "n_active_months": 3, "avg_per_month": 2.0, "avg_attendance": 100.0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 2, "3": 2, "4": 2}, "coords": [55.2505, 22.2896]}, {"club": "\u0160ilut\u0117s \"Kintai\"", "dept": "Klaip\u0117dos skyrius", "region": "Vakar\u0173", "n_members": 1, "n_events": 2, "n_active_months": 1, "avg_per_month": 2.0, "avg_attendance": 100.0, "size_group": "Ma\u017eas (1\u20135)", "act_group": "Reguliariai (2\u20133/m\u0117n.)", "att_group": "Auk\u0161tas (75%+)", "monthly": {"2": 2}, "coords": [55.7033, 21.1443]}];
+
+const MAP_DATA = [{"dept": "Elektr\u0117n\u0173 skyrius", "region": "Ryt\u0173", "coords": [54.7833, 24.6667], "clubs": 3, "members": 8, "events": 14, "avg_att": 75.8}, {"dept": "Kauno skyrius", "region": "Piet\u0173", "coords": [54.8985, 23.9036], "clubs": 2, "members": 22, "events": 3, "avg_att": 76.5}, {"dept": "Klaip\u0117dos skyrius", "region": "Vakar\u0173", "coords": [55.7033, 21.1443], "clubs": 4, "members": 49, "events": 47, "avg_att": 59.7}, {"dept": "Utenos skyrius", "region": "\u0160iaur\u0117s", "coords": [55.4986, 25.5986], "clubs": 4, "members": 33, "events": 31, "avg_att": 35.8}, {"dept": "\u0160iauli\u0173 skyrius", "region": "\u0160iaur\u0117s", "coords": [55.9349, 23.3137], "clubs": 6, "members": 252, "events": 73, "avg_att": 21.9}, {"dept": "Panev\u0117\u017eio skyrius", "region": "\u0160iaur\u0117s", "coords": [55.7348, 24.3574], "clubs": 4, "members": 88, "events": 32, "avg_att": 77.7}, {"dept": "Rasein\u0173 skyrius", "region": "Piet\u0173", "coords": [55.367, 23.122], "clubs": 2, "members": 35, "events": 2, "avg_att": 100.0}, {"dept": "Roki\u0161kio skyrius", "region": "\u0160iaur\u0117s", "coords": [55.9609, 25.585], "clubs": 1, "members": 9, "events": 0, "avg_att": 0}, {"dept": "Taurag\u0117s skyrius", "region": "Vakar\u0173", "coords": [55.2505, 22.2896], "clubs": 9, "members": 92, "events": 51, "avg_att": 82.1}, {"dept": "Ukmerges skyrius", "region": "Ryt\u0173", "coords": [55.2457, 24.7725], "clubs": 2, "members": 40, "events": 27, "avg_att": 37.5}, {"dept": "Vilkavi\u0161kio skyrius", "region": "Piet\u0173", "coords": [54.65, 23.0333], "clubs": 9, "members": 188, "events": 39, "avg_att": 84.3}, {"dept": "Vilniaus skyrius", "region": "Ryt\u0173", "coords": [54.6872, 25.2797], "clubs": 7, "members": 136, "events": 11, "avg_att": 15.1}, {"dept": "Visagino skyrius", "region": "\u0160iaur\u0117s", "coords": [55.601, 26.4307], "clubs": 4, "members": 73, "events": 0, "avg_att": 0}];
+
+const RC = {"Piet\u0173":"#C0392B","Ryt\u0173":"#1A7A4A","Vakar\u0173":"#1F618D","\u0160iaur\u0117s":"#D35400"};
+
+function attColor(a){
+  if(a===0)return'#AEB6BF';
+  if(a>=75)return'#1A7A4A';
+  if(a>=50)return'#E59866';
+  return'#E74C3C';
+}
+function attBadge(att,g){
+  if(g==='Nėra duomenų')return'<span class="badge bk">—</span>';
+  if(g.startsWith('Aukštas'))return`<span class="badge bg">${att.toFixed(1)}%</span>`;
+  if(g.startsWith('Vidutinis'))return`<span class="badge ba">${att.toFixed(1)}%</span>`;
+  return`<span class="badge bc">${att.toFixed(1)}%</span>`;
+}
+function actBadge(g){
+  if(g==='Neaktyvus')return'<span class="badge bk">Neaktyvus</span>';
+  if(g.startsWith('Retai'))return'<span class="badge bb">Retai</span>';
+  if(g.startsWith('Reguliariai'))return'<span class="badge ba">Reguliariai</span>';
+  return'<span class="badge bg">Intensyviai</span>';
+}
+
+const _done={};
+function go(id,el){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  if(!_done[id]){_done[id]=true;init(id);}
+}
+
+function init(id){
+  if(id==='apzvalga')initOverview();
+  else if(id==='dydis')initSize();
+  else if(id==='aktyvumas')initActivity();
+  else if(id==='lankomumas')initAtt();
+  else if(id==='geografija'){initMap();initDeptTbl();}
+  else if(id==='sarasas')renderTbl();
+}
+
+function mkChart(id,cfg){new Chart(document.getElementById(id),cfg);}
+
+function initOverview(){
+  const regs=['Pietų','Rytų','Vakarų','Šiaurės'];
+  const rCols=['#C0392B','#1A7A4A','#1F618D','#D35400'];
+  const memByR=regs.map(r=>CLUBS.filter(c=>c.region===r).reduce((a,b)=>a+b.n_members,0));
+  const evByR=regs.map(r=>CLUBS.filter(c=>c.region===r).reduce((a,b)=>a+b.n_events,0));
+  const attByR=regs.map(r=>{
+    const cl=CLUBS.filter(c=>c.region===r&&c.avg_attendance>0);
+    return cl.length?Math.round(cl.reduce((a,b)=>a+b.avg_attendance,0)/cl.length*10)/10:0;
+  });
+  const monthly={1:0,2:0,3:0,4:0};
+  CLUBS.forEach(c=>Object.entries(c.monthly).forEach(([m,v])=>{if(monthly[m]!==undefined)monthly[m]+=v;}));
+
+  mkChart('cRegion',{type:'bar',data:{labels:regs,datasets:[{label:'Nariai',data:memByR,backgroundColor:rCols,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}});
+  mkChart('cMonthly',{type:'bar',data:{labels:['Sausis','Vasaris','Kovas','Balandis'],datasets:[{label:'Susitikimai',data:Object.values(monthly),backgroundColor:['#C0392B','#E59866','#1A7A4A','#5DADE2'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}});
+  mkChart('cRegEvents',{type:'bar',data:{labels:regs,datasets:[{label:'Susitikimai',data:evByR,backgroundColor:rCols,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}});
+  mkChart('cRegAtt',{type:'bar',data:{labels:regs,datasets:[{label:'%',data:attByR,backgroundColor:rCols,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+}
+
+function initSize(){
+  mkChart('cSizeDonut',{type:'doughnut',data:{labels:['Mažas (1–5)','Vidutinis (6–15)','Didelis (16+)'],datasets:[{data:[9,25,23],backgroundColor:['#5DADE2','#1F618D','#2C3E50'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const top10=[...CLUBS].sort((a,b)=>b.n_members-a.n_members).slice(0,10);
+  mkChart('cTopSize',{type:'bar',data:{labels:top10.map(c=>c.club.length>28?c.club.slice(0,26)+'…':c.club),datasets:[{label:'Nariai',data:top10.map(c=>c.n_members),backgroundColor:top10.map(c=>RC[c.region]||'#5DADE2'),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+function initActivity(){
+  const ag=['Neaktyvus','Retai (1/mėn.)','Reguliariai (2–3/mėn.)','Intensyviai (4+/mėn.)'];
+  const agC=['#D5D8DC','#5DADE2','#1A7A4A','#7D3C98'];
+  mkChart('cActDonut',{type:'doughnut',data:{labels:ag,datasets:[{data:ag.map(g=>CLUBS.filter(c=>c.act_group===g).length),backgroundColor:agC,borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const regs=['Pietų','Rytų','Vakarų','Šiaurės'];
+  mkChart('cActRegion',{type:'bar',data:{labels:regs,datasets:[{label:'Susitikimai',data:regs.map(r=>CLUBS.filter(c=>c.region===r).reduce((a,b)=>a+b.n_events,0)),backgroundColor:['#C0392B','#1A7A4A','#1F618D','#D35400'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}});
+  const top15=[...CLUBS].filter(c=>c.n_events>0).sort((a,b)=>b.n_events-a.n_events).slice(0,15);
+  mkChart('cActTop',{type:'bar',data:{labels:top15.map(c=>c.club.length>32?c.club.slice(0,30)+'…':c.club),datasets:[{label:'Susitikimai',data:top15.map(c=>c.n_events),backgroundColor:top15.map(c=>RC[c.region]||'#5DADE2'),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+function initAtt(){
+  const ag=['Aukštas (75%+)','Vidutinis (50–75%)','Žemas (<50%)','Nėra duomenų'];
+  const agC=['#1A7A4A','#E59866','#E74C3C','#D5D8DC'];
+  mkChart('cAttDonut',{type:'doughnut',data:{labels:ag,datasets:[{data:ag.map(g=>CLUBS.filter(c=>c.att_group===g).length),backgroundColor:agC,borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const top20=[...CLUBS].filter(c=>c.avg_attendance>0).sort((a,b)=>b.avg_attendance-a.avg_attendance).slice(0,20);
+  mkChart('cAttBar',{type:'bar',data:{labels:top20.map(c=>c.club.length>32?c.club.slice(0,30)+'…':c.club),datasets:[{label:'%',data:top20.map(c=>Math.round(c.avg_attendance*10)/10),backgroundColor:top20.map(c=>attColor(c.avg_attendance)),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{x:{beginAtZero:true,max:100,grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+let _mapInit=false;
+function initMap(){
+  if(_mapInit)return; _mapInit=true;
+  const map=L.map('map').setView([55.3,23.9],7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:18
+  }).addTo(map);
+
+  const maxM=Math.max(...MAP_DATA.map(d=>d.members));
+  MAP_DATA.forEach(d=>{
+    const r=Math.max(18,Math.round(10+(d.members/maxM)*55));
+    const col=RC[d.region]||'#5DADE2';
+    const attC=attColor(d.avg_att);
+    const circle=L.circleMarker([d.coords[0],d.coords[1]],{
+      radius:r,
+      fillColor:attC,
+      color:col,
+      weight:3,
+      opacity:1,
+      fillOpacity:0.85
+    }).addTo(map);
+    const popup=`<div style="font-family:system-ui,sans-serif;min-width:180px">
+      <strong style="font-size:13px;color:#1a1a18">${d.dept}</strong><br>
+      <span style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase">${d.region} regionas</span>
+      <hr style="margin:6px 0;border:none;border-top:1px solid #eee">
+      <div style="font-size:12px;line-height:1.8">
+        <b>${d.clubs}</b> klubai · <b>${d.members}</b> nariai<br>
+        <b>${d.events}</b> susitikimai (saus.–bal.)<br>
+        Vid. lankomumas: <b style="color:${attC}">${d.avg_att>0?d.avg_att.toFixed(1)+'%':'—'}</b>
+      </div>
+    </div>`;
+    circle.bindPopup(popup);
+
+    const icon=L.divIcon({
+      className:'',
+      html:`<div style="font-size:${r>28?'11':'9'}px;font-weight:700;color:#fff;text-align:center;line-height:${r*2}px;width:${r*2}px;margin-left:-${r}px;margin-top:-${r}px;pointer-events:none">${d.members}</div>`,
+      iconSize:[0,0]
+    });
+    L.marker([d.coords[0],d.coords[1]],{icon,interactive:false}).addTo(map);
+  });
+}
+
+function initDeptTbl(){
+  const sorted=[...MAP_DATA].sort((a,b)=>a.region.localeCompare(b.region)||a.dept.localeCompare(b.dept));
+  document.getElementById('deptTbl').innerHTML=sorted.map(d=>`<tr>
+    <td><strong style="font-weight:500">${d.dept}</strong></td>
+    <td><span class="badge" style="background:${(RC[d.region]||'#5DADE2')}22;color:${RC[d.region]||'#5DADE2'};border:1px solid ${(RC[d.region]||'#5DADE2')}55">${d.region}</span></td>
+    <td style="text-align:center">${d.clubs}</td>
+    <td style="text-align:center">${d.members}</td>
+    <td style="text-align:center">${d.events}</td>
+    <td>${d.avg_att>0?`<span class="bar-wrap"><span class="bar-fill" style="width:${Math.min(d.avg_att,100)}%;background:${attColor(d.avg_att)}"></span></span> <span style="font-size:.78rem">${d.avg_att.toFixed(1)}%</span>`:'—'}</td>
+  </tr>`).join('');
+}
+
+function renderTbl(){
+  const fR=document.getElementById('fR').value;
+  const fS=document.getElementById('fS').value;
+  const fA=document.getElementById('fA').value;
+  const fAt=document.getElementById('fAt').value;
+  const filtered=CLUBS.filter(c=>
+    (!fR||c.region===fR)&&(!fS||c.size_group===fS)&&
+    (!fA||c.act_group===fA)&&(!fAt||c.att_group===fAt)
+  ).sort((a,b)=>a.dept.localeCompare(b.dept)||a.club.localeCompare(b.club));
+  document.getElementById('clubTbl').innerHTML=filtered.map(c=>`<tr>
+    <td><strong style="font-weight:500">${c.club}</strong></td>
+    <td style="color:var(--muted);font-size:.78rem">${c.dept}</td>
+    <td><span class="badge" style="background:${(RC[c.region]||'#5DADE2')}22;color:${RC[c.region]||'#5DADE2'};border:1px solid ${(RC[c.region]||'#5DADE2')}55">${c.region}</span></td>
+    <td style="text-align:center">${c.n_members}</td>
+    <td style="text-align:center">${c.n_events}</td>
+    <td style="text-align:center">${c.avg_per_month>0?c.avg_per_month.toFixed(1):'—'}</td>
+    <td>${attBadge(c.avg_attendance,c.att_group)}</td>
+    <td><span class="badge bk" style="font-size:.68rem">${c.size_group}</span></td>
+    <td>${actBadge(c.act_group)}</td>
+  </tr>`).join('');
+  document.getElementById('tblCnt').textContent=`Rodoma ${filtered.length} iš ${CLUBS.length} klubų`;
+}
+
+window.addEventListener('load',()=>{_done['apzvalga']=true;initOverview();});
+</script>
+</body>
+</html>
